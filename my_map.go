@@ -1,6 +1,9 @@
 package main
 
+import "sync"
+
 type MyMap struct {
+	mu      sync.RWMutex
 	buckets [][]node
 }
 
@@ -24,6 +27,8 @@ func NewMap(bucketsCount int) *MyMap {
 
 func (m *MyMap) Set(key string, val int) {
 	index := m.makeHash(key)
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	elements := m.buckets[index]
 	for nodeIndex, node := range elements {
 		if node.key == key {
@@ -41,6 +46,8 @@ func (m *MyMap) Set(key string, val int) {
 
 func (m *MyMap) Get(key string) (int, bool) {
 	index := m.makeHash(key)
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	elements := m.buckets[index]
 	for _, node := range elements {
 		if node.key == key {
@@ -53,6 +60,9 @@ func (m *MyMap) Get(key string) (int, bool) {
 
 func (m *MyMap) Delete(key string) {
 	index := m.makeHash(key)
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	elements := m.buckets[index]
 	for nodeIndex, node := range elements {
 		if node.key == key {
